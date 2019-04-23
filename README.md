@@ -1,2 +1,5 @@
 # LeapMotionGame
-WebGL game built around LeapMotion interactivity for CSCI-438 Advanced Game Dev Class
+LeapMotion interactivity demonstration built around Babylon.js for a CSCI-438 Advanced Game Dev Class
+
+
+## Technologies
