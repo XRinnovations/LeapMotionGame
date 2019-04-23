@@ -18,15 +18,45 @@ Purpose: Build three.js environment and important hand model
 		</style>
 	</head>
 	<body>
-		<script src="js/three.js"></script>
+		<script src="js/three.min.js"></script>
 		<script>
-            // My Javascript will go here.
-            var scene = new THREE.Scene();
-            var camera = new THREE.PerspectiveCamera( 75, window.innerWidth / window.innerHeight, 0.1, 1000 );
+			// My Javascript will go here.
+			var camera, scene, renderer, cube, material, mesh;
 
-            var renderer = new THREE.WebGLRenderer();
-            renderer.setSize( window.innerWidth, window.innerHeight );
-            document.body.appendChild( renderer.domElement );
+			init();
+
+			function init() {
+				scene = new THREE.Scene();
+				camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 10000);
+				camera.position.z = 1000;
+				scene.add(camera);
+
+				cube = new THREE.CubeGeometry(300, 300, 300);
+				material = new THREE.MeshBasicMaterial({color: 0x0000FF, wireframe:true});
+				mesh = new THREE.Mesh(cube, material);
+				scene.add(mesh);
+
+				renderer = new THREE.CanvasRenderer();
+				renderer.setSize(window.innerWidth, window.innerHeight); // this the dom element
+
+				document.body.appendChild(renderer.domElement); //append to dom using javascript
+
+				animate();
+
+			}
+
+			function animate() {
+				requestAnimationFrame(animate);
+
+				mesh.rotation.x += 0.02;
+				mesh.rotation.y += 0.02;
+
+				renderer.render(scene, camera);
+			}
+			
+
+
+			
 		</script>
 	</body>
 </html>
