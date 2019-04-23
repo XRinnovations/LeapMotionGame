@@ -1,0 +1,234 @@
+<!--
+    Author: Austin Bearden
+    Purpose: Mesh LeapMotion hand model WebSocket JSON data feed and sample Babylon project!
+    Filename: comboTestFile.html
+-->
+
+<!-- 
+Author: Austin Bearden
+Date Created: 04/04/2019
+Purpose: Get connect/info live from LeapMotion
+Using code from: LeapMotion SDK: JSONViewer.html
+Filename: connection.html
+-->
+
+<!-- Get LeapMotin Data -->
+<!DOCTYPE html>
+<!------------------------------------------------------------------------------
+| Copyright (C) 2012-2013 Leap Motion, Inc. All rights reserved.               |
+| Leap Motion proprietary and confidential. Not for distribution.              |
+| Use subject to the terms of the Leap Motion SDK Agreement available at       |
+| https://developer.leapmotion.com/sdk_agreement, or another agreement         |
+| between Leap Motion and you, your company or other organization.             |
+------------------------------------------------------------------------------->
+<html>
+<head>
+<title>Leap WebSocket JSON Viewer</title>
+<title>Babylon - Getting Started</title>
+    <!-- Bablyon links and CSS styling -->
+    <!-- Link to the last version of BabylonJS -->
+    <script src="https://preview.babylonjs.com/babylon.js"></script>
+    <!-- Link to the last version of BabylonJS loaders to enable loading filetypes such as .gltf -->
+    <script src="https://preview.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+    <!-- Link to pep.js to ensure pointer events work consistently in all browsers -->
+    <script src="https://code.jquery.com/pep/0.4.1/pep.js"></script>
+    <style>
+            html, body {
+                overflow: hidden;
+                width   : 100%;
+                height  : 100%;
+                margin  : 0;
+                padding : 0;
+            }
+        
+            #renderCanvas {
+                width   : 100%;
+                height  : 100%;
+                touch-action: none;
+            }
+    </style>
+<canvas id="renderCanvas"></canvas>
+<script>
+var ws;
+var paused = false;
+var pauseOnGesture = false;
+var focusListener;
+var blurListener;
+var handLeft = false;
+var handFlat = false;
+var handRight = false;
+var rotation;
+var rotationValue = 0; //made this global variable for the sake of control bablyon object
+
+
+// Support both the WebSocket and MozWebSocket objects
+if ((typeof(WebSocket) == 'undefined') &&
+    (typeof(MozWebSocket) != 'undefined')) {
+    WebSocket = MozWebSocket;
+}
+
+//Babylon main script code
+window.addEventListener('DOMContentLoaded', function() {
+                // All the following code is entered here.
+                var canvas = document.getElementById('renderCanvas');
+                var engine = new BABYLON.Engine(canvas, true);
+
+                var createScene = function() {
+                    // Create a basic BJS Scene object.
+                    var scene = new BABYLON.Scene(engine);
+
+                    // Create a FreeCamera, and set its position to (x:0, y:5, z:-10).
+                    var camera = new BABYLON.FreeCamera('camera', new BABYLON.Vector3(0, 5,-10), scene);
+
+                    // Target the camera to scene origin.
+                    camera.setTarget(BABYLON.Vector3.Zero());
+
+                    // Attach the camera to the canvas.
+                    camera.attachControl(canvas, false);
+
+                    // Create a basic light, aiming 0,1,0 - meaning, to the sky.
+                    var light = new BABYLON.HemisphericLight('light1', new BABYLON.Vector3(0,1,0), scene);
+
+                    // Create a built-in "sphere" shape. 
+                    var sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:2}, scene);
+
+                    // Move the sphere upward 1/2 of its height.
+                    sphere.position.y = rotationValue*100;
+
+                    // Create a built-in "ground" shape.
+                    var ground = BABYLON.MeshBuilder.CreateGround('ground1', {height:6, width:6, subdivisions: 2}, scene);
+
+                    //put the sphere.position.y = rotationValue*100 in the scene's render function!
+                    // scene.afterrender = () => {
+                    //     console.log("Accessed this?");
+                    //     // sphere.position.y = rotationValue*100;
+                    // }
+
+                    engine.runRenderLoop(function () {
+                        sphere.position.y = rotationValue*10;
+                        //create methods for updating variables and call methods here!!
+                        scene.render();
+                    });
+
+                
+                    // Return the created scene.
+                    return scene;
+                }
+
+                var scene = createScene();
+
+                
+                window.addEventListener('resize', function() {
+                    engine.resize();
+                });
+});
+
+// Create the socket with event handlers
+function init() {
+    // Create and open the socket
+    ws = new WebSocket("ws://localhost:6437/v6.json");
+
+    // On successful connection
+    ws.onopen = function(event) {
+        var enableMessage = JSON.stringify({enableGestures: true});
+        ws.send(enableMessage); // Enable gestures
+        ws.send(JSON.stringify({focused: true})); // claim focus
+
+        focusListener = window.addEventListener('focus', function(e) {
+                               ws.send(JSON.stringify({focused: true})); // claim focus
+                         });
+
+        blurListener = window.addEventListener('blur', function(e) {
+                               ws.send(JSON.stringify({focused: false})); // relinquish focus
+                         });
+
+        // document.getElementById("main").style.visibility = "visible";
+        // document.getElementById("connection").innerHTML = "WebSocket connection open!";
+    };
+
+    // On message received
+    ws.onmessage = function(event) {
+        if (!paused) {
+            var obj = JSON.parse(event.data);
+            var str = JSON.stringify(obj, undefined, 2);
+            var objRotation = obj.hands[0].armBasis[1];
+            rotationValue = objRotation[2];
+            if(rotationValue >= 0.2 && rotationValue <= 1.0) {
+                handLeft = true;
+                handRight = false;
+                handFlat = false;
+                // this variable represents the angle of the plane
+                rotation = -30; //degrees
+            } else if(rotationValue < -0.5 && rotationValue > -1.0) {
+                handRight = true;
+                handLeft = false;
+                handFlat = false;
+                // this variable represents the angle of the plane
+                rotation = 30; //degress
+            } else {
+              // set hand to flat to true
+              handFlat = true;
+              // set hand left and hand right to false
+              handLeft = false;
+              handRight = false;
+              // this variable represents the angle of the plane
+              rotation = 0; //degrees
+            }
+            console.log(rotationValue, " HandFlat: ", handFlat);
+            console.log(rotationValue, " HandLeft: ", handLeft);
+            console.log(rotationValue, " HandRight: ", handRight);
+            // document.getElementById("output").innerHTML = '<pre>' + str + '</pre>';
+            if (pauseOnGesture && obj.gestures.length > 0) {
+                togglePause();
+            }
+        }
+
+    };
+
+    
+    
+    // On socket close
+    ws.onclose = function(event) {
+        ws = null;
+        window.removeListener("focus", focusListener);
+        window.removeListener("blur", blurListener);
+        document.getElementById("main").style.visibility = "hidden";
+        document.getElementById("connection").innerHTML = "WebSocket connection closed";
+    }
+
+    // On socket error
+    ws.onerror = function(event) {
+      alert("Received error");
+    };
+}
+
+function togglePause() {
+  paused = !paused;
+
+  if (paused) {
+    document.getElementById("pause").innerText = "Resume";
+  } else {
+    document.getElementById("pause").innerText = "Pause";
+  }
+}
+
+function pauseForGestures() {
+  if (document.getElementById("pauseOnGesture").checked) {
+    pauseOnGesture = true;
+  } else {
+    pauseOnGesture = false;
+  }
+}
+</script>
+</head>
+<body onload="init();">
+<h1>Leap WebSocket JSON Viewer</h1>
+<button id="pause" onclick="togglePause()">Pause</button>
+<input type="checkbox" id="pauseOnGesture" onclick="pauseForGestures()">Pause on gesture</input>
+<div id="connection">WebSocket not connected</div>
+<div id="main" style="visibility:hidden">
+  <h3>JSON Frame data:</h3>
+  <div id="output"></div>
+</div>
+</body>
+</html>
