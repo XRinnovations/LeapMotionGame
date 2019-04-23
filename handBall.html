@@ -54,10 +54,10 @@ var paused = false;
 var pauseOnGesture = false;
 var focusListener;
 var blurListener;
-var handLeft = false;
-var handFlat = false;
-var handRight = false;
-var rotation;
+// hand's palm position
+var palmPosX = 10;
+var palmPosY = 0;
+var palmPosZ = 3;
 var rotationValue = 0; //made this global variable for the sake of control bablyon object
 
 
@@ -92,20 +92,21 @@ window.addEventListener('DOMContentLoaded', function() {
                     // Create a built-in "sphere" shape. 
                     var sphere = BABYLON.MeshBuilder.CreateSphere('sphere', {segments:16, diameter:2}, scene);
 
-                    // Move the sphere upward 1/2 of its height.
-                    sphere.position.y = rotationValue*100;
+                    // Initially set X, Y, Z position of Sphere
+                    sphere.position.x = palmPosY;
+                    sphere.position.y = palmPosY;
+                    sphere.position.z = -palmPosZ;
 
                     // Create a built-in "ground" shape.
-                    var ground = BABYLON.MeshBuilder.CreateGround('ground1', {height:6, width:6, subdivisions: 2}, scene);
+                    // var ground = BABYLON.MeshBuilder.CreateGround('ground1', {height:6, width:6, subdivisions: 2}, scene);
 
-                    //put the sphere.position.y = rotationValue*100 in the scene's render function!
-                    // scene.afterrender = () => {
-                    //     console.log("Accessed this?");
-                    //     // sphere.position.y = rotationValue*100;
-                    // }
+        
 
                     engine.runRenderLoop(function () {
-                        sphere.position.y = rotationValue*10;
+                        // Update X, Y, Z position of Sphere
+                        sphere.position.x = palmPosY/100;
+                        sphere.position.y = palmPosY/100;
+                        sphere.position.z = -palmPosZ/100;
                         //create methods for updating variables and call methods here!!
                         scene.render();
                     });
@@ -150,37 +151,16 @@ function init() {
     ws.onmessage = function(event) {
         if (!paused) {
             var obj = JSON.parse(event.data);
-            var str = JSON.stringify(obj, undefined, 2);
+            //var str = JSON.stringify(obj, undefined, 2);
             var objRotation = obj.hands[0].armBasis[1];
-            rotationValue = objRotation[2];
-            if(rotationValue >= 0.2 && rotationValue <= 1.0) {
-                handLeft = true;
-                handRight = false;
-                handFlat = false;
-                // this variable represents the angle of the plane
-                rotation = -30; //degrees
-            } else if(rotationValue < -0.5 && rotationValue > -1.0) {
-                handRight = true;
-                handLeft = false;
-                handFlat = false;
-                // this variable represents the angle of the plane
-                rotation = 30; //degress
-            } else {
-              // set hand to flat to true
-              handFlat = true;
-              // set hand left and hand right to false
-              handLeft = false;
-              handRight = false;
-              // this variable represents the angle of the plane
-              rotation = 0; //degrees
-            }
-            console.log(rotationValue, " HandFlat: ", handFlat);
-            console.log(rotationValue, " HandLeft: ", handLeft);
-            console.log(rotationValue, " HandRight: ", handRight);
-            // document.getElementById("output").innerHTML = '<pre>' + str + '</pre>';
-            if (pauseOnGesture && obj.gestures.length > 0) {
-                togglePause();
-            }
+            palmPosX = obj.hands[0].palmPosition[0]; // x-dimension of palm position
+            palmPosY = obj.hands[0].palmPosition[1]; // y-dimension of palm position
+            palmPosZ = obj.hands[0].palmPosition[2]; // z-dimension of palm position
+            
+            console.log("PalmX: ", palmPosX);
+            console.log("PalmY: ", palmPosY);
+            console.log("PalmZ: ", palmPosZ);
+            
         }
 
     };
