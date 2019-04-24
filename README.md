@@ -1,7 +1,8 @@
 ## LeapMotionGame
 LeapMotion interactivity demonstration built around Babylon.js for a CSCI-438 Advanced Game Dev Class
 
-```To Run Game:
+```
+To Run Game:
 
     - First you will need a first generation LeapMotion and the Leap Motion app associated with it. You will need to plug in the LeapMotion sensor and turn on the Leap Motion app.
 
