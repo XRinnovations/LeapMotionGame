@@ -159,7 +159,7 @@ function init() {
     ws.onmessage = function(event) {
         if (!paused) {
             var obj = JSON.parse(event.data);
-            //var str = JSON.stringify(obj, undefined, 2);
+            //update palmPosX,Y,Z variable values from the JSON feed from the WebSocket
             var objRotation = obj.hands[0].armBasis[1];
             palmPosX = obj.hands[0].palmPosition[0]; // x-dimension of palm position
             palmPosY = obj.hands[0].palmPosition[1]; // y-dimension of palm position
